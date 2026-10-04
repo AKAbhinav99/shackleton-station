@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shackleton Station</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="game">
+  <div id="markers"></div>
+
+  <!-- ============ VISOR / HUD ============ -->
+  <div id="visor" hidden></div>
+  <div id="visorTint" hidden></div>
+  <div id="co2fx"></div>
+  <div id="flash"></div>
+
+  <div id="hud" hidden>
+    <canvas id="compass" width="620" height="54"></canvas>
+    <div id="cw" hidden><span class="lvl"></span><span class="msg"></span></div>
+
+    <section id="obj">
+      <div class="k" id="objKicker">SIM 07</div>
+      <div class="t" id="objTitle"></div>
+      <ol id="objSteps"></ol>
+    </section>
+
+    <section id="met">
+      <div class="clock" id="metClock">MET 001/08:00</div>
+      <div class="sub" id="metSub">EVA 1 · Shackleton connecting ridge</div>
+    </section>
+
+    <section id="suit" class="tele">
+      <header><span>PLSS</span><span id="suitMode">EVA</span></header>
+      <div class="row big"><span class="k">O₂ PRI</span><span class="v" id="sO2">8:00</span></div>
+      <div class="bar"><i id="sO2bar"></i><b style="left:12.5%"></b></div>
+      <div class="row"><span class="k">Walkback margin</span><span class="v" id="sWalk">—</span></div>
+      <div class="row" id="sSopRow" hidden><span class="k">SOP (purge)</span><span class="v warn" id="sSop">30:00</span></div>
+      <div class="grid">
+        <div><span class="k">Suit</span><span class="v" id="sPress">4.3 psi</span></div>
+        <div><span class="k">ppCO₂</span><span class="v" id="sCO2">0.9</span></div>
+        <div><span class="k">Metabolic</span><span class="v" id="sMet">110 W</span></div>
+        <div><span class="k">Battery</span><span class="v" id="sBatt">100%</span></div>
+        <div><span class="k">Ext temp</span><span class="v" id="sTemp">−22 °C</span></div>
+        <div><span class="k">Dose</span><span class="v" id="sDose">0.0 mSv</span></div>
+      </div>
+    </section>
+
+    <section id="outpost" class="tele" hidden>
+      <header><span>OUTPOST</span><span id="oSol">SOL 1</span></header>
+      <div class="grid">
+        <div><span class="k">Bus</span><span class="v" id="oBus">—</span></div>
+        <div><span class="k">Storage</span><span class="v" id="oBatt">—</span></div>
+        <div><span class="k">O₂</span><span class="v" id="oO2">—</span></div>
+        <div><span class="k">Water</span><span class="v" id="oH2O">—</span></div>
+        <div><span class="k">Food</span><span class="v" id="oFood">—</span></div>
+        <div><span class="k">Crew dose</span><span class="v" id="oDose">—</span></div>
+      </div>
+    </section>
+
+    <section id="ltv" class="tele" hidden>
+      <header><span>LTV-1</span><span id="lLights">LIGHTS OFF</span></header>
+      <div class="row big"><span class="k">Speed</span><span class="v" id="lSpeed">0.0 km/h</span></div>
+      <div class="grid">
+        <div><span class="k">Heading</span><span class="v" id="lHdg">000°</span></div>
+        <div><span class="k">Pitch / roll</span><span class="v" id="lAtt">0° / 0°</span></div>
+        <div><span class="k">Odometer</span><span class="v" id="lOdo">0 m</span></div>
+        <div><span class="k">Battery</span><span class="v" id="lBatt">100%</span></div>
+      </div>
+      <div class="row" id="lCableRow" hidden><span class="k">Cable paid out</span><span class="v" id="lCable">0 m</span></div>
+      <div class="hint">W/S throttle · A/D steer · Space brake · E dismount</div>
+    </section>
+
+    <div id="meter" hidden>
+      <div class="k" id="meterK">ARRAY OUTPUT</div>
+      <div class="v" id="meterV">0.0 kW</div>
+      <div class="track"><i id="meterBar"></i><b id="meterMark"></b></div>
+      <div class="hint" id="meterHint"></div>
+    </div>
+
+    <div id="crosshair"></div>
+    <svg id="ring" viewBox="0 0 64 64" hidden><circle cx="32" cy="32" r="26" class="bg"/><circle cx="32" cy="32" r="26" class="fg" id="ringFg"/></svg>
+    <div id="prompt" hidden><kbd id="promptKey">E</kbd><span id="promptTxt"></span></div>
+
+    <div id="radio">
+      <div id="captions"></div>
+      <div id="choices" hidden></div>
+    </div>
+
+    <aside id="note" hidden>
+      <div class="k">Training note</div>
+      <p id="noteTxt"></p>
+      <div class="src" id="noteSrc"></div>
+    </aside>
+    <div id="toasts"></div>
+    <div id="keys" class="keyhint"><kbd>M</kbd> map <kbd>Tab</kbd> DCM <kbd>F</kbd> camera <kbd>L</kbd> lamp <kbd>V</kbd> visor <kbd>Esc</kbd> pause</div>
+  </div>
+
+  <div id="viewfinder" hidden>
+    <i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i>
+    <div class="cross"></div>
+    <div class="info"><span>HANDHELD 60 mm · f/8 · 1/250</span><span id="vfTarget"></span></div>
+    <div class="hint">Frame the target · <kbd>Space</kbd> or click to shoot · <kbd>F</kbd> lower camera</div>
+  </div>
+
+  <!-- ============ DCM (suit display & control module) ============ -->
+  <div class="overlay" id="dcm" hidden>
+    <div class="dcmwrap">
+      <div class="dcm">
+        <div class="dcm-top">
+          <div class="lcd" id="lcd"><div id="lcd1">PWR EXT  FAN OFF</div><div id="lcd2">P 0.0 PSI  O2 --</div></div>
+          <div class="cwlamps"><span id="lampW">WARN</span><span id="lampC">CAUT</span></div>
+        </div>
+        <div class="switches" id="switches"></div>
+        <div class="dcm-bottom">
+          <button class="pb" id="pbLeak" type="button">LEAK<br>CHECK</button>
+          <button class="pb" id="pbAck" type="button">C&amp;W<br>ACK</button>
+          <div class="dcm-plate">DCM · EMU DISPLAY &amp; CONTROL</div>
+        </div>
+      </div>
+      <div class="cuff" id="cuff">
+        <div class="cuff-h"><span>CUFF CHECKLIST</span><span id="cuffPage">PG 2</span></div>
+        <ol id="cuffList"></ol>
+        <div class="cuff-f" id="cuffFoot"></div>
+      </div>
+      <button class="close" data-close="dcm" type="button">Close <kbd>Tab</kbd></button>
+    </div>
+  </div>
+
+  <!-- ============ PCS (habitat console) ============ -->
+  <div class="overlay" id="pcs" hidden>
+    <div class="pcs">
+      <div class="pcs-bar">
+        <span class="pcs-title" id="pcsTitle">PCS — Portable Computer System</span>
+        <nav id="pcsTabs">
+          <button data-tab="eclss" type="button">ECLSS</button>
+          <button data-tab="eps" type="button">EPS</button>
+          <button data-tab="rad" type="button">RAD</button>
+        </nav>
+        <button class="pcs-x" data-close="pcs" type="button">✕</button>
+      </div>
+      <div class="pcs-body">
+        <div class="pcs-main" id="pcsMain"></div>
+        <aside class="pcs-proc" id="pcsProc"></aside>
+      </div>
+      <div class="pcs-status" id="pcsStatus">READY</div>
+    </div>
+  </div>
+
+  <!-- ============ MAP ============ -->
+  <div class="overlay" id="map" hidden>
+    <div class="mapwrap">
+      <canvas id="mapCanvas" width="760" height="760"></canvas>
+      <aside class="mapside">
+        <div class="k">Traverse map</div>
+        <h3 id="mapTitle">Shackleton connecting ridge</h3>
+        <p id="mapInfo"></p>
+        <ul class="legend">
+          <li><i class="lg you"></i>EV1 (you)</li><li><i class="lg ltv"></i>LTV-1</li>
+          <li><i class="lg site"></i>Array sites · annual sunlight</li><li><i class="lg psr"></i>Permanent shadow</li>
+          <li><i class="lg cable"></i>Power cable</li><li><i class="lg wp"></i>Current waypoint</li>
+        </ul>
+        <div id="mapActions"></div>
+        <button class="btn ghost" data-close="map" type="button">Close <kbd>M</kbd></button>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ============ FRR / manifest ============ -->
+  <div class="overlay solid" id="frr" hidden>
+    <div class="frr">
+      <header class="frr-h">
+        <div>
+          <div class="k">Flight Readiness Review · Cargo delivery CL-2</div>
+          <h2>Build the manifest</h2>
+          <p>One cargo lander, <b>26 t</b> to the surface. Every element competes for that mass, and the flight control team will poll their consoles on what you send.</p>
+        </div>
+        <div class="massmeter"><div class="k">Landed mass</div><div class="v" id="frrMass">0.0 t</div><div class="track"><i id="frrMassBar"></i></div><div class="k" id="frrLeft"></div></div>
+      </header>
+      <div class="frr-body">
+        <div class="items" id="frrItems"></div>
+        <div class="trade">
+          <div class="k">Trade study · projected to sol 60 at a ridge site</div>
+          <canvas id="frrChart" width="520" height="220"></canvas>
+          <div class="kpis" id="frrKpis"></div>
+          <div class="k" style="margin-top:14px">Console poll</div>
+          <ul class="poll" id="frrPoll"></ul>
+        </div>
+      </div>
+      <footer class="frr-f">
+        <span id="frrMsg"></span>
+        <button class="btn" id="frrGo" type="button">Submit for FRR</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ============ cards & flow ============ -->
+  <div class="overlay solid" id="card" hidden>
+    <div class="cardwrap">
+      <div class="patchslot"></div>
+      <div class="cardtxt">
+        <div class="k" id="cardKicker">Chapter 1 of 7</div>
+        <h1 id="cardTitle">Egress</h1>
+        <div class="meta" id="cardMeta"></div>
+        <p id="cardLede"></p>
+        <ul id="cardObj"></ul>
+        <div class="chip" id="cardSim" hidden></div>
+        <button class="btn" id="cardGo" type="button">Begin <kbd>Space</kbd></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="timelapse" hidden>
+    <div class="tl">
+      <div class="k">Increment timeline</div>
+      <div class="tl-sol"><span id="tlSol">SOL 5</span><span class="tl-sub" id="tlSub">Time compression</span></div>
+      <div class="tl-grid">
+        <canvas id="tlChart" width="620" height="200"></canvas>
+        <ul class="tl-log" id="tlLog"></ul>
+      </div>
+      <button class="btn ghost" id="tlSkip" type="button">Skip <kbd>Space</kbd></button>
+    </div>
+  </div>
+
+  <div class="overlay" id="summary" hidden>
+    <div class="sheet">
+      <div class="k" id="sumK">EVA summary</div>
+      <h2 id="sumTitle">EVA 1 complete</h2>
+      <dl class="kv" id="sumKv"></dl>
+      <p id="sumNote"></p>
+      <button class="btn" id="sumGo" type="button">Continue <kbd>Space</kbd></button>
+    </div>
+  </div>
+
+  <div class="overlay" id="fail" hidden>
+    <div class="sheet failsheet">
+      <div class="k">Sim supervisor</div>
+      <h2 id="failTitle">Sim terminated</h2>
+      <p id="failTxt"></p>
+      <div class="row-btns"><button class="btn" id="failRetry" type="button">Reset to the malfunction</button><button class="btn ghost" id="failCont" type="button">Continue with the outcome</button></div>
+    </div>
+  </div>
+
+  <div class="overlay solid" id="debrief" hidden>
+    <div class="debrief" id="debriefBody"></div>
+  </div>
+
+  <!-- ============ menus ============ -->
+  <div class="overlay" id="title" hidden>
+    <div class="titlewrap">
+      <div class="patchslot big"></div>
+      <div class="titletxt">
+        <div class="k">Lunar surface operations · integrated simulation</div>
+        <h1>Shackleton<br><em>Station</em></h1>
+        <p>A four-crew outpost on the rim of Shackleton crater, at the lunar south pole. Plan the cargo, walk it off the lander, bring the habitat to life, and keep it alive through darkness, a solar storm and a slipped return. Every rate is from published NASA data. Every decision is graded against flight rules.</p>
+        <nav class="menu">
+          <button id="mBegin" type="button">Begin training</button>
+          <button id="mIntro" type="button">Watch the walkthrough</button>
+          <button id="mChapters" type="button">Chapter select</button>
+          <button id="mSettings" type="button">Settings</button>
+          <button id="mSources" type="button">Data sources</button>
+        </nav>
+        <p class="fine">Independent educational project for the NASA Space Apps Challenge. Not affiliated with or endorsed by NASA. Best with headphones; voices use your browser's speech engine.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="chapters" hidden>
+    <div class="sheet wide"><div class="k">Chapter select</div><h2>Training flow</h2><ol class="chaplist" id="chapList"></ol><button class="btn ghost" data-back type="button">Back</button></div>
+  </div>
+
+  <div class="overlay" id="settings" hidden>
+    <div class="sheet">
+      <div class="k">Settings</div><h2>Simulator</h2>
+      <div class="set" id="setList"></div>
+      <button class="btn ghost" data-back type="button">Done</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="sources" hidden>
+    <div class="sheet wide">
+      <div class="k">Simulation basis</div><h2>Data sources and assumptions</h2>
+      <p class="lede">Every rate traces to a published measurement or program specification. Where a value had to be assumed, it is labelled as an assumption.</p>
+      <div class="tablewrap"><table class="data" id="srcTable"></table></div>
+      <h3>Deliberate simplifications</h3>
+      <ul class="plain" id="srcAssume"></ul>
+      <button class="btn ghost" data-back type="button">Back</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="pause" hidden>
+    <div class="sheet narrow">
+      <div class="k">Sim hold</div><h2>Paused</h2>
+      <nav class="menu">
+        <button id="pResume" type="button">Resume</button>
+        <button id="pRestart" type="button">Restart this chapter</button>
+        <button id="pSettings" type="button">Settings</button>
+        <button id="pSources" type="button">Data sources</button>
+        <button id="pQuit" type="button">Quit to title</button>
+      </nav>
+      <div class="controls">
+        <div><kbd>W A S D</kbd> move / drive</div><div><kbd>Shift</kbd> lope</div><div><kbd>Space</kbd> hop · brake</div>
+        <div><kbd>E</kbd> interact (hold where shown)</div><div><kbd>Tab</kbd> suit DCM</div><div><kbd>M</kbd> map</div>
+        <div><kbd>F</kbd> camera</div><div><kbd>L</kbd> headlamp</div><div><kbd>V</kbd> sun visor</div><div><kbd>1 2 3</kbd> radio replies</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ opening walkthrough ============ -->
+  <div id="intro" hidden>
+    <canvas id="iSnap"></canvas>
+    <svg id="iRoute" aria-hidden="true"><path id="iRouteGlow"/><path id="iRoutePath"/></svg>
+    <div id="iTags" aria-hidden="true"></div>
+    <div id="iRed"></div>
+    <div class="ibar top">
+      <div class="ibrand"><span class="patchslot tiny"></span><span class="k">Mission walkthrough</span><span class="istep" id="iStep"></span></div>
+      <div class="ictl">
+        <button type="button" class="ibtn" id="iPrev" aria-label="Previous chapter">‹</button>
+        <button type="button" class="ibtn" id="iPause" aria-label="Pause">❚❚</button>
+        <button type="button" class="ibtn" id="iNext" aria-label="Next chapter">›</button>
+        <button type="button" class="iskip" id="iSkip">Skip intro <kbd>Esc</kbd></button>
+      </div>
+    </div>
+    <section class="icap" id="iCap" aria-live="polite">
+      <div class="k" id="iKicker"></div>
+      <h2 id="iTitle"></h2>
+      <p id="iLede"></p>
+      <ol id="iObj"></ol>
+    </section>
+    <aside class="ipanel" id="iPanel" hidden></aside>
+    <div class="ipaused">Paused · <kbd>Space</kbd> to resume</div>
+    <div class="ibar bot"><ol id="iTrack"></ol><div class="ihint"><kbd>←</kbd><kbd>→</kbd> chapter · <kbd>Space</kbd> pause</div></div>
+    <div id="iCard"><div class="k" id="iCardK"></div><div class="v" id="iCardV"></div><div class="s" id="iCardS"></div></div>
+    <div id="iWhite"></div>
+    <div id="iFade"></div>
+  </div>
+
+  <div class="overlay solid" id="loading">
+    <div class="loadwrap"><div class="patchslot"></div><div class="k" id="loadTxt">Generating terrain</div><div class="track"><i id="loadBar"></i></div></div>
+  </div>
+
+  <div id="touch" hidden><div id="stick"><i></i></div><button id="tE" type="button">E</button></div>
+</div>
+
+<template id="patchTpl">
+  <svg class="patch" viewBox="0 0 200 200" aria-hidden="true">
+    <defs><path id="pc" d="M100,100 m-80,0 a80,80 0 1,1 160,0 a80,80 0 1,1 -160,0"/><clipPath id="pclip"><circle cx="100" cy="100" r="66"/></clipPath></defs>
+    <circle cx="100" cy="100" r="97" fill="#0A0F15" stroke="#FF5A1F" stroke-width="3"/>
+    <circle cx="100" cy="100" r="67" fill="#03060A" stroke="#D7EEF8" stroke-width="1.2"/>
+    <g clip-path="url(#pclip)">
+      <circle cx="58" cy="62" r="1" fill="#fff"/><circle cx="130" cy="52" r="1.2" fill="#fff"/><circle cx="96" cy="44" r="0.8" fill="#fff"/><circle cx="150" cy="80" r="0.9" fill="#fff"/><circle cx="78" cy="86" r="0.7" fill="#fff"/>
+      <circle cx="72" cy="74" r="10" fill="#2E6FB5"/><path d="M72,64 a10,10 0 0,1 0,20 a5,10 0 0,0 0,-20" fill="#03060A" opacity="0.8"/>
+      <circle cx="148" cy="118" r="6" fill="#FFF3D6"/><circle cx="148" cy="118" r="14" fill="#FFF3D6" opacity="0.15"/>
+      <path d="M30,126 L52,114 L66,118 L86,105 L102,111 L120,101 L140,115 L170,119 L170,170 L30,170 Z" fill="#161E27"/>
+      <path d="M30,134 L170,128 L170,170 L30,170 Z" fill="#0D131A"/>
+      <path d="M40,138 L152,133" stroke="#2A3542" stroke-width="1.5"/><path d="M46,146 L160,140" stroke="#222C37" stroke-width="1.2"/>
+      <g transform="translate(92,118)"><rect x="-5" y="-9" width="10" height="7" fill="#D7EEF8"/><rect x="-7" y="-3" width="14" height="4" fill="#C99A3A"/><path d="M-7,1 L-10,6 M7,1 L10,6" stroke="#D7EEF8" stroke-width="1"/></g>
+    </g>
+    <text font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="13.5" letter-spacing="2.6" fill="#D7EEF8"><textPath href="#pc" startOffset="25%" text-anchor="middle">SHACKLETON · SURFACE OPS</textPath></text>
+    <text font-family="Barlow Condensed, sans-serif" font-weight="600" font-size="12" letter-spacing="3" fill="#FF5A1F" x="100" y="190" text-anchor="middle">SIM 07</text>
+  </svg>
+</template>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/util.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/world.js"></script>
+<script src="js/models.js"></script>
+<script src="js/interior.js"></script>
+<script src="js/outpost.js"></script>
+<script src="js/base.js"></script>
+<script src="js/player.js"></script>
+<script src="js/rover.js"></script>
+<script src="js/npc.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/panels.js"></script>
+<script src="js/story.js"></script>
+<script src="js/intro.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
