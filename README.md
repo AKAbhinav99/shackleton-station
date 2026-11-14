@@ -1,20 +1,60 @@
 # Shackleton Station
 
-A first-person lunar surface operations trainer set on the Shackleton connecting ridge at the lunar south pole. You play EV1, the surface lead of a four-person crew, through an integrated simulation modelled on how astronauts actually train: checklists, flight rules, a flight control team on the loop, and a sim supervisor who inserts malfunctions.
+A browser game for kids aged 7–12: run a base on the Moon or Mars with four astronauts, and keep them breathing, fed and safe from radiation for 15 days. Built for the NASA Space Apps Challenge on teaching real deep-space trade-offs through play. Independent educational project, not affiliated with or endorsed by NASA.
 
-Built for the NASA Space Apps Challenge on sustaining a lunar outpost: balancing life support, radiation shielding, power and food, and experiencing the decisions that decide whether a mission succeeds. Independent educational project, not affiliated with or endorsed by NASA.
-
-**No build step.** Serve the folder with any static server (or GitHub Pages) and open `index.html`.
+**No download, no account, no build step.** Serve the folder with any static server (or GitHub Pages) and open `index.html`.
 
 ```
 python3 -m http.server 8000
 ```
 
+## How the mission works
+
+Each day the solar panels make a little power. The player shares it out between three things, and **no choice is free**:
+
+| | What it does | What it costs |
+|---|---|---|
+| 💨 Air & food machines | Need 4 power a day for 4 crew; 5 grows extra | Power you can't spend on anything else |
+| 🛡️ Shield wall | Each level blocks 25% of solar-storm radiation and some everyday radiation | Slow: 4 power per level |
+| 🔬 Science | 2 power = 1 star, the reason the crew is there | Power you didn't save for a dark spell |
+
+Leftover power goes into a battery, which has a limit, so power can also be wasted. The pressure comes from things the player can't control:
+
+- **Real solar flares** (see below). When one hits, the crew can take shelter (safe, but they lose the day's science and some battery), keep working (stars, but a big radiation dose), or ask Mission Control.
+- **Communication delay** is a real mechanic. On the Moon, Earth answers in 1.3 seconds, so asking is free. On Mars the one-way delay is 3–22 minutes (random each game). Waiting for advice costs radiation, and a question to Mission Control is answered the next sol, about yesterday's situation.
+- **Low-power spells.** On the Moon a predictable long shadow (forecast from day 1) tests whether you saved ahead. On Mars a surprise dust storm does the same, without a warning.
+- **Events** with two-sided choices: a moonwalk for an ice sample (stars vs. suit oxygen and radiation), a clogged greenhouse pump, dusty solar panels, a meteorite strike, and extra experiment requests from Earth.
+
+Every playthrough draws different flares, event days, shadow or storm timing and Mars delay. Running out of air or reaching the radiation limit sends the crew home early rather than "killing" them, and the report explains what happened and suggests a new plan. The Moon is the easier first mission; Mars is harder.
+
+Plain language throughout: jargon (millisievert, sol, solar flare) is explained where it appears. After each day a **Real science** card shares one sourced fact.
+
+## Real NASA data and why it is used
+
+| In the game | Dataset or source | Why |
+|---|---|---|
+| Solar flares: date, X/M class, sunspot group | **NASA DONKI** (Space Weather Database of Notifications, Knowledge, Information), fetched live from `api.nasa.gov` | Players face flares the Sun really produced in the past 60 days; the event card says which flare it was and where the data came from |
+| "Real space weather, last 7 days" on the title | NASA DONKI | Links the game to what the Sun is doing right now |
+| Everyday radiation: Moon 1.37 mSv/day | Chang'e-4 LND, Zhang et al., *Science Advances* 6, eaaz1334 (2020) | Measured on the lunar surface |
+| Everyday radiation: Mars 0.64 mSv/day | Curiosity RAD, Hassler et al., *Science* 343 (2014) | Measured on the Martian surface |
+| Radiation limit 250 mSv | NASA-STD-3001 (30-day limit for blood-forming organs) | The real standard crews are held to |
+| Radio delay | Speed of light over Earth–Moon and Earth–Mars distances | Turns distance into a decision |
+| Predictable lunar shadows, surprise Mars dust storms | LRO illumination mapping; 2018 global dust storm (Opportunity) | Real reasons solar power fails |
+| Real-science cards | NASA Veggie (Khodadad et al. 2020), Twins Study (Garrett-Bakelman et al. 2019), Human Research Program, LCROSS, Curiosity RAD; links to osdr.nasa.gov | Astronaut health and space biology findings, in kid language |
+
+**Live vs. archived.** DONKI is called once per hour per browser (results are cached). If NASA can't be reached, the game falls back to an archive of 11 famous real flares (2003–2024) and says "archived" everywhere it shows them; static data is never presented as live. If the flare catalogue endpoint is down, the loader reads the same flares from DONKI's notifications feed. NASA's shared `DEMO_KEY` allows only about 10 requests an hour per address, so for judging or classrooms add your own free key from api.nasa.gov: `index.html?nasakey=YOUR_KEY`.
+
+**Simplified for play:** flare radiation is an estimate scaled by flare size (big flares often, but not always, cause radiation storms); power is in game units; 4 crew, 15 days. These simplifications are listed in-game under **Real NASA data**.
+
+## For older players and classrooms
+
+The title screen also offers the original **Astronaut training mode (12+)**: a first-person, seven-chapter simulation with suit checklists, flight rules, a cargo manifest review and a flight-director debrief. The sections below describe it.
+
 ## Opening walkthrough
 
-The site opens with a two-minute captioned fly-through of the whole training flow, staged in the real 3D scene with the actual hardware and two suited crew. It walks through every chapter step by step: the objectives tick off as each shot plays, and a side panel shows the console that chapter is played on (manifest and console poll, suit DCM, array output, ECLSS procedure, drill and fan-failure checklist, battery reset, space-weather call, consumables re-plan, debrief). It ends on the title screen, or goes straight into chapter 0 from **Begin training**.
+The training mode has a two-minute captioned fly-through of the whole training flow, staged in the real 3D scene with the actual hardware and two suited crew. It walks through every chapter step by step: the objectives tick off as each shot plays, and a side panel shows the console that chapter is played on (manifest and console poll, suit DCM, array output, ECLSS procedure, drill and fan-failure checklist, battery reset, space-weather call, consumables re-plan, debrief). It ends on the title screen, or goes straight into chapter 0 from **Begin training**.
 
-**Skip intro** (or `Esc`) leaves at any point. `←` / `→` step between chapters, `Space` pauses, and the progress track is clickable. Replay it from **Watch the walkthrough** on the title menu. Add `?intro=0` to the URL to boot straight to the title; `?chapter=N` also skips it. With `prefers-reduced-motion`, camera flights become dissolves and drift is reduced.
+**Skip intro** (or `Esc`) leaves at any point. `←` / `→` step between chapters, `Space` pauses, and the progress track is clickable. Open it from **Watch the training tour** on the title menu. Add `?intro=1` to play it on load. With `prefers-reduced-motion`, camera flights become dissolves and drift is reduced.
 
 ## The campaign
 
@@ -74,6 +114,8 @@ js/npc.js       EV2
 js/ui.js        HUD, radio, flow screens
 js/panels.js    DCM, habitat PCS, map, manifest board, debrief
 js/story.js     the seven chapters and evaluation
-js/intro.js     opening walkthrough: camera keyframes, staging, transitions, captions
+js/intro.js     training tour: camera keyframes, staging, transitions, captions
+js/nasa.js      NASA DONKI flares: live fetch, notifications fallback, archive
+js/kids.js      the kids' mission: rules, events, planning UI, report
 js/main.js      boot, input, loop
 ```

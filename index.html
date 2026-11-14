@@ -254,17 +254,22 @@
     <div class="titlewrap">
       <div class="patchslot big"></div>
       <div class="titletxt">
-        <div class="k">Lunar surface operations · integrated simulation</div>
+        <div class="k">A space base game · ages 7–12</div>
         <h1>Shackleton<br><em>Station</em></h1>
-        <p>A four-crew outpost on the rim of Shackleton crater, at the lunar south pole. Plan the cargo, walk it off the lander, bring the habitat to life, and keep it alive through darkness, a solar storm and a slipped return. Every rate is from published NASA data. Every decision is graded against flight rules.</p>
-        <nav class="menu">
-          <button id="mBegin" type="button">Begin training</button>
-          <button id="mIntro" type="button">Watch the walkthrough</button>
-          <button id="mChapters" type="button">Chapter select</button>
-          <button id="mSettings" type="button">Settings</button>
-          <button id="mSources" type="button">Data sources</button>
-        </nav>
-        <p class="fine">Independent educational project for the NASA Space Apps Challenge. Not affiliated with or endorsed by NASA. Best with headphones; voices use your browser's speech engine.</p>
+        <p>Run a base on the Moon or Mars with four astronauts. Each day you get a little solar power: spend it on air and food, a radiation shield, or science. Real solar flares from NASA decide when the Sun's storms hit. No choice is free, just like for real astronauts.</p>
+        <button id="mPlay" class="btn playbtn" type="button">Play the mission ▶</button>
+        <p class="livewx" id="liveWx">Checking today's real space weather with NASA…</p>
+        <div class="older">
+          <div class="k">Older players and classrooms</div>
+          <nav class="menu small">
+            <button id="mBegin" type="button">Astronaut training mode (12+)</button>
+            <button id="mIntro" type="button">Watch the training tour</button>
+            <button id="mChapters" type="button">Chapter select</button>
+            <button id="mSettings" type="button">Settings</button>
+            <button id="mSources" type="button">Training data sources</button>
+          </nav>
+        </div>
+        <p class="fine">Independent educational project for the NASA Space Apps Challenge. Not affiliated with or endorsed by NASA. Uses NASA open data (DONKI space weather) with sources shown in the game.</p>
       </div>
     </div>
   </div>
@@ -309,6 +314,9 @@
       </div>
     </div>
   </div>
+
+  <!-- ============ kids' mission ============ -->
+  <div id="kids" class="kids" hidden></div>
 
   <!-- ============ opening walkthrough ============ -->
   <div id="intro" hidden>
@@ -380,6 +388,8 @@
 <script src="js/panels.js"></script>
 <script src="js/story.js"></script>
 <script src="js/intro.js"></script>
+<script src="js/nasa.js"></script>
+<script src="js/kids.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

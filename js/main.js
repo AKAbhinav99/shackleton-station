@@ -22,7 +22,7 @@ function newGame(){
 SS.on('comm', q => G.metrics.comm.push(q));
 
 /* ------------------------------------------------------------------ overlay bookkeeping */
-const BLOCKERS = ['intro', 'title', 'chapters', 'settings', 'sources', 'pause', 'card', 'summary', 'fail', 'timelapse', 'frr', 'debrief', 'loading'];
+const BLOCKERS = ['intro', 'kids', 'title', 'chapters', 'settings', 'sources', 'pause', 'card', 'summary', 'fail', 'timelapse', 'frr', 'debrief', 'loading'];
 const PANELS = ['dcm', 'pcs', 'map'];
 G.syncUi = function(){
   G.frozen = G.paused || BLOCKERS.some(id => !$(id).hidden);
@@ -60,6 +60,7 @@ window.addEventListener('keydown', e => {
   if (k === 'tab') e.preventDefault();
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) return;
   if (G.mode === 'intro'){ if (!e.repeat && SS.intro.key(k)) e.preventDefault(); return; }
+  if (G.mode === 'kids'){ if (!e.repeat && SS.kids.key(k)) e.preventDefault(); return; }
   if (!e.repeat) hits.add(k);
   keys[k] = true;
   if (e.repeat) return;
@@ -142,6 +143,27 @@ function playIntro(fromLoad){
   });
   G.syncUi();
 }
+/* kids' mission: the main game */
+function showTitle(){
+  G.mode = 'title'; titleT = 0;
+  const t = $('title'); t.inert = false; t.hidden = false; t.classList.remove('reveal'); void t.offsetWidth; t.classList.add('reveal');
+  G.syncUi();
+}
+function playKids(){
+  if (G.mode === 'intro') return;
+  SS.audio.init();
+  G.mode = 'kids'; $('title').hidden = true;
+  SS.kids.open({ onExit: showTitle });
+  G.syncUi();
+}
+function liveWx(){
+  const N = SS.nasa, el = $('liveWx');
+  if (!el) return;
+  if (N.status === 'live' && N.week) el.innerHTML = '<span class="dot live"></span>Real space weather, last 7 days: <b>' + N.week.count + '</b> big solar flare' + (N.week.count === 1 ? '' : 's') + (N.week.strongest ? ' (strongest ' + UI.esc(N.week.strongest.cls) + ')' : '') + ' · NASA DONKI';
+  else if (N.status === 'offline') el.innerHTML = '<span class="dot arch"></span>Offline: the game will use real flares from NASA\'s archive';
+}
+SS.on('nasa', liveWx);
+$('mPlay').addEventListener('click', playKids);
 $('mBegin').addEventListener('click', () => start(0));
 $('mIntro').addEventListener('click', () => playIntro(false));
 $('mChapters').addEventListener('click', () => { if (G.mode === 'intro') return; SS.audio.init(); chapterList(); show('chapters', 'title'); });
@@ -262,7 +284,8 @@ async function boot(){
   if (/debug/.test(location.search)) window.SSD = { start, G, ST, SS, playIntro };
   if (/fast/.test(location.search)){ SS.radio.fast = true; SS.audio.voiceOn = false; G.settings.voice = false; }
   const q = /chapter=(\d)/.exec(location.search);
-  if (q || /intro=0/.test(location.search)){
+  SS.nasa.load();
+  if (q || !/intro=1/.test(location.search)){
     G.mode = 'title';
     $('loading').hidden = true; $('title').hidden = false;
     G.syncUi();
@@ -295,7 +318,7 @@ function frame(){
     return;
   }
 
-  if (G.mode === 'title' || G.mode === 'loading'){
+  if (G.mode === 'title' || G.mode === 'loading' || G.mode === 'kids'){
     titleT += dtR;
     const a = titleT * 0.035 + 2.2, cx = 22, cz = 16, rr = 58;
     const x = cx + Math.cos(a) * rr, z = cz + Math.sin(a) * rr;
