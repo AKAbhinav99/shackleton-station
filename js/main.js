@@ -19,6 +19,7 @@ G.syncUi = function(){
   $('kidhud').hidden = $('hud').hidden;
   if (matchMedia('(pointer: coarse)').matches) $('touch').hidden = G.mode !== 'play' || G.frozen;
   if (G.overlay && document.pointerLockElement) document.exitPointerLock();
+  if (G.lockHint) G.lockHint();
 };
 
 /* ------------------------------------------------------------------ input */
@@ -47,7 +48,7 @@ window.addEventListener('keydown', e => {
   if (!e.repeat) hits.add(k);
   keys[k] = true;
   if (e.repeat) return;
-  if (k === 'escape'){ handleEsc(); return; }
+  if (k === 'escape'){ if (locked || performance.now() - unlockedAt < 300) return; handleEsc(); return; }
   if (/^[1-9]$/.test(k)){ SS.emit('choice-key', +k); return; }
   if (k === ' '){
     if (UI.spaceTarget){ e.preventDefault(); const f = UI.spaceTarget; f(); hits.delete(' '); return; }
@@ -62,14 +63,33 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { const k = e.key === ' ' ? ' ' : e.key.toLowerCase(); keys[k] = false; });
 window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 
-let locked = false, dragging = false;
+let locked = false, dragging = false, unlockedAt = -1e9;
 function lock(){
   if (G.overlay || G.mode !== 'play' || matchMedia('(pointer: coarse)').matches) return;
   const c = G.renderer.domElement;
   try { const r = c.requestPointerLock && c.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (e) {}
 }
 G.lock = lock;
-document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === G.renderer.domElement; });
+document.addEventListener('pointerlockchange', () => {
+  const was = locked;
+  locked = document.pointerLockElement === G.renderer.domElement;
+  if (was && !locked) unlockedAt = performance.now();
+  lockHint();
+});
+/* while playing with the mouse free, a hint says how to grab it again */
+function lockHint(){
+  const h = $('lockHint'); if (!h) return;
+  h.hidden = locked || G.mode !== 'play' || G.overlay || matchMedia('(pointer: coarse)').matches;
+  h.innerHTML = 'Mouse is free · <b>click</b> to look around' + (G.mode === 'play' ? ' · <kbd>Esc</kbd> again to pause' : '');
+  $('lockOn').hidden = !locked;
+}
+G.lockHint = lockHint;
+/* clicking anywhere on the game (not on a menu) locks the mouse */
+document.addEventListener('mousedown', e => {
+  if (e.button !== 0 || locked || G.mode !== 'play' || G.overlay) return;
+  if (e.target.closest && e.target.closest('button, a, input, select, .overlay')) return;
+  lock();
+});
 function look(dx, dy){
   if (G.inputLocked || G.overlay){ SS.input.mouseDX += dx; return; }
   const s = 0.0022 * (G.settings.sens || 1), inv = G.settings.invert ? -1 : 1;
