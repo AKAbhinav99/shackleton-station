@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Shackleton Station</title>
+<meta name="description" content="A first-person Moon base game for kids 7–12, with real NASA solar flare data.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -97,8 +98,11 @@
       <div class="src" id="noteSrc"></div>
     </aside>
     <div id="toasts"></div>
+    <span id="lampW" hidden></span><span id="lampC" hidden></span>
     <div id="keys" class="keyhint"><kbd>M</kbd> map <kbd>Tab</kbd> DCM <kbd>F</kbd> camera <kbd>L</kbd> lamp <kbd>V</kbd> visor <kbd>Esc</kbd> pause</div>
   </div>
+
+  <div id="kidhud" hidden></div>
 
   <div id="viewfinder" hidden>
     <i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i>
@@ -107,175 +111,28 @@
     <div class="hint">Frame the target · <kbd>Space</kbd> or click to shoot · <kbd>F</kbd> lower camera</div>
   </div>
 
-  <!-- ============ DCM (suit display & control module) ============ -->
-  <div class="overlay" id="dcm" hidden>
-    <div class="dcmwrap">
-      <div class="dcm">
-        <div class="dcm-top">
-          <div class="lcd" id="lcd"><div id="lcd1">PWR EXT  FAN OFF</div><div id="lcd2">P 0.0 PSI  O2 --</div></div>
-          <div class="cwlamps"><span id="lampW">WARN</span><span id="lampC">CAUT</span></div>
-        </div>
-        <div class="switches" id="switches"></div>
-        <div class="dcm-bottom">
-          <button class="pb" id="pbLeak" type="button">LEAK<br>CHECK</button>
-          <button class="pb" id="pbAck" type="button">C&amp;W<br>ACK</button>
-          <div class="dcm-plate">DCM · EMU DISPLAY &amp; CONTROL</div>
-        </div>
-      </div>
-      <div class="cuff" id="cuff">
-        <div class="cuff-h"><span>CUFF CHECKLIST</span><span id="cuffPage">PG 2</span></div>
-        <ol id="cuffList"></ol>
-        <div class="cuff-f" id="cuffFoot"></div>
-      </div>
-      <button class="close" data-close="dcm" type="button">Close <kbd>Tab</kbd></button>
-    </div>
-  </div>
-
-  <!-- ============ PCS (habitat console) ============ -->
-  <div class="overlay" id="pcs" hidden>
-    <div class="pcs">
-      <div class="pcs-bar">
-        <span class="pcs-title" id="pcsTitle">PCS — Portable Computer System</span>
-        <nav id="pcsTabs">
-          <button data-tab="eclss" type="button">ECLSS</button>
-          <button data-tab="eps" type="button">EPS</button>
-          <button data-tab="rad" type="button">RAD</button>
-        </nav>
-        <button class="pcs-x" data-close="pcs" type="button">✕</button>
-      </div>
-      <div class="pcs-body">
-        <div class="pcs-main" id="pcsMain"></div>
-        <aside class="pcs-proc" id="pcsProc"></aside>
-      </div>
-      <div class="pcs-status" id="pcsStatus">READY</div>
-    </div>
-  </div>
-
-  <!-- ============ MAP ============ -->
-  <div class="overlay" id="map" hidden>
-    <div class="mapwrap">
-      <canvas id="mapCanvas" width="760" height="760"></canvas>
-      <aside class="mapside">
-        <div class="k">Traverse map</div>
-        <h3 id="mapTitle">Shackleton connecting ridge</h3>
-        <p id="mapInfo"></p>
-        <ul class="legend">
-          <li><i class="lg you"></i>EV1 (you)</li><li><i class="lg ltv"></i>LTV-1</li>
-          <li><i class="lg site"></i>Array sites · annual sunlight</li><li><i class="lg psr"></i>Permanent shadow</li>
-          <li><i class="lg cable"></i>Power cable</li><li><i class="lg wp"></i>Current waypoint</li>
-        </ul>
-        <div id="mapActions"></div>
-        <button class="btn ghost" data-close="map" type="button">Close <kbd>M</kbd></button>
-      </aside>
-    </div>
-  </div>
-
-  <!-- ============ FRR / manifest ============ -->
-  <div class="overlay solid" id="frr" hidden>
-    <div class="frr">
-      <header class="frr-h">
-        <div>
-          <div class="k">Flight Readiness Review · Cargo delivery CL-2</div>
-          <h2>Build the manifest</h2>
-          <p>One cargo lander, <b>26 t</b> to the surface. Every element competes for that mass, and the flight control team will poll their consoles on what you send.</p>
-        </div>
-        <div class="massmeter"><div class="k">Landed mass</div><div class="v" id="frrMass">0.0 t</div><div class="track"><i id="frrMassBar"></i></div><div class="k" id="frrLeft"></div></div>
-      </header>
-      <div class="frr-body">
-        <div class="items" id="frrItems"></div>
-        <div class="trade">
-          <div class="k">Trade study · projected to sol 60 at a ridge site</div>
-          <canvas id="frrChart" width="520" height="220"></canvas>
-          <div class="kpis" id="frrKpis"></div>
-          <div class="k" style="margin-top:14px">Console poll</div>
-          <ul class="poll" id="frrPoll"></ul>
-        </div>
-      </div>
-      <footer class="frr-f">
-        <span id="frrMsg"></span>
-        <button class="btn" id="frrGo" type="button">Submit for FRR</button>
-      </footer>
-    </div>
-  </div>
-
-  <!-- ============ cards & flow ============ -->
-  <div class="overlay solid" id="card" hidden>
-    <div class="cardwrap">
-      <div class="patchslot"></div>
-      <div class="cardtxt">
-        <div class="k" id="cardKicker">Chapter 1 of 7</div>
-        <h1 id="cardTitle">Egress</h1>
-        <div class="meta" id="cardMeta"></div>
-        <p id="cardLede"></p>
-        <ul id="cardObj"></ul>
-        <div class="chip" id="cardSim" hidden></div>
-        <button class="btn" id="cardGo" type="button">Begin <kbd>Space</kbd></button>
-      </div>
-    </div>
-  </div>
-
-  <div class="overlay" id="timelapse" hidden>
-    <div class="tl">
-      <div class="k">Increment timeline</div>
-      <div class="tl-sol"><span id="tlSol">SOL 5</span><span class="tl-sub" id="tlSub">Time compression</span></div>
-      <div class="tl-grid">
-        <canvas id="tlChart" width="620" height="200"></canvas>
-        <ul class="tl-log" id="tlLog"></ul>
-      </div>
-      <button class="btn ghost" id="tlSkip" type="button">Skip <kbd>Space</kbd></button>
-    </div>
-  </div>
-
-  <div class="overlay" id="summary" hidden>
-    <div class="sheet">
-      <div class="k" id="sumK">EVA summary</div>
-      <h2 id="sumTitle">EVA 1 complete</h2>
-      <dl class="kv" id="sumKv"></dl>
-      <p id="sumNote"></p>
-      <button class="btn" id="sumGo" type="button">Continue <kbd>Space</kbd></button>
-    </div>
-  </div>
-
-  <div class="overlay" id="fail" hidden>
-    <div class="sheet failsheet">
-      <div class="k">Sim supervisor</div>
-      <h2 id="failTitle">Sim terminated</h2>
-      <p id="failTxt"></p>
-      <div class="row-btns"><button class="btn" id="failRetry" type="button">Reset to the malfunction</button><button class="btn ghost" id="failCont" type="button">Continue with the outcome</button></div>
-    </div>
-  </div>
-
-  <div class="overlay solid" id="debrief" hidden>
-    <div class="debrief" id="debriefBody"></div>
-  </div>
+  <!-- ============ mission panels ============ -->
+  <div class="overlay" id="mx" hidden><div class="kx-card" id="mxCard" role="dialog" aria-modal="true"></div></div>
+  <div class="overlay" id="kinfo" hidden><div class="kx-card wide" id="kinfoCard" role="dialog" aria-modal="true"></div></div>
 
   <!-- ============ menus ============ -->
   <div class="overlay" id="title" hidden>
     <div class="titlewrap">
       <div class="patchslot big"></div>
       <div class="titletxt">
-        <div class="k">A space base game · ages 7–12</div>
+        <div class="k">A Moon base adventure · ages 7–12</div>
         <h1>Shackleton<br><em>Station</em></h1>
-        <p>Run a base on the Moon or Mars with four astronauts. Each day you get a little solar power: spend it on air and food, a radiation shield, or science. Real solar flares from NASA decide when the Sun's storms hit. No choice is free, just like for real astronauts.</p>
-        <button id="mPlay" class="btn playbtn" type="button">Play the mission ▶</button>
+        <p>Step onto the Moon and run a real-feeling base for 6 days. Walk around, drive the rover, collect rocks and decide where the power goes. Keep your crew breathing, fed and safe, and run for cover when the Sun flares. The flares are real ones recorded by NASA.</p>
+        <button id="mPlay" class="btn playbtn" type="button">Play ▶</button>
         <p class="livewx" id="liveWx">Checking today's real space weather with NASA…</p>
-        <div class="older">
-          <div class="k">Older players and classrooms</div>
-          <nav class="menu small">
-            <button id="mBegin" type="button">Astronaut training mode (12+)</button>
-            <button id="mIntro" type="button">Watch the training tour</button>
-            <button id="mChapters" type="button">Chapter select</button>
-            <button id="mSettings" type="button">Settings</button>
-            <button id="mSources" type="button">Training data sources</button>
-          </nav>
-        </div>
-        <p class="fine">Independent educational project for the NASA Space Apps Challenge. Not affiliated with or endorsed by NASA. Uses NASA open data (DONKI space weather) with sources shown in the game.</p>
+        <nav class="menu small">
+          <button id="mHow" type="button">How to play</button>
+          <button id="mData" type="button">Real NASA data</button>
+          <button id="mSettings" type="button">Settings</button>
+        </nav>
+        <p class="fine">Independent educational project for the NASA Space Apps Challenge. Not affiliated with or endorsed by NASA. Uses NASA open data (DONKI space weather); every source is listed under Real NASA data. Works best with a keyboard and mouse, and with sound on.</p>
       </div>
     </div>
-  </div>
-
-  <div class="overlay" id="chapters" hidden>
-    <div class="sheet wide"><div class="k">Chapter select</div><h2>Training flow</h2><ol class="chaplist" id="chapList"></ol><button class="btn ghost" data-back type="button">Back</button></div>
   </div>
 
   <div class="overlay" id="settings" hidden>
@@ -286,69 +143,26 @@
     </div>
   </div>
 
-  <div class="overlay" id="sources" hidden>
-    <div class="sheet wide">
-      <div class="k">Simulation basis</div><h2>Data sources and assumptions</h2>
-      <p class="lede">Every rate traces to a published measurement or program specification. Where a value had to be assumed, it is labelled as an assumption.</p>
-      <div class="tablewrap"><table class="data" id="srcTable"></table></div>
-      <h3>Deliberate simplifications</h3>
-      <ul class="plain" id="srcAssume"></ul>
-      <button class="btn ghost" data-back type="button">Back</button>
-    </div>
-  </div>
-
   <div class="overlay" id="pause" hidden>
     <div class="sheet narrow">
-      <div class="k">Sim hold</div><h2>Paused</h2>
+      <div class="k">Paused</div><h2>Take a break</h2>
       <nav class="menu">
-        <button id="pResume" type="button">Resume</button>
-        <button id="pRestart" type="button">Restart this chapter</button>
+        <button id="pResume" type="button">Keep playing</button>
+        <button id="pRestart" type="button">Start a new mission</button>
         <button id="pSettings" type="button">Settings</button>
-        <button id="pSources" type="button">Data sources</button>
-        <button id="pQuit" type="button">Quit to title</button>
+        <button id="pSources" type="button">Real NASA data</button>
+        <button id="pQuit" type="button">Main menu</button>
       </nav>
       <div class="controls">
-        <div><kbd>W A S D</kbd> move / drive</div><div><kbd>Shift</kbd> lope</div><div><kbd>Space</kbd> hop · brake</div>
-        <div><kbd>E</kbd> interact (hold where shown)</div><div><kbd>Tab</kbd> suit DCM</div><div><kbd>M</kbd> map</div>
-        <div><kbd>F</kbd> camera</div><div><kbd>L</kbd> headlamp</div><div><kbd>V</kbd> sun visor</div><div><kbd>1 2 3</kbd> radio replies</div>
+        <div><kbd>W A S D</kbd> walk / drive</div><div><kbd>Mouse</kbd> look around</div><div><kbd>Shift</kbd> bounce-run</div>
+        <div><kbd>Space</kbd> jump · brake</div><div><kbd>E</kbd> use (hold when shown)</div><div><kbd>L</kbd> headlamp</div>
+        <div><kbd>F</kbd> camera</div><div><kbd>V</kbd> sun visor</div>
       </div>
     </div>
-  </div>
-
-  <!-- ============ kids' mission ============ -->
-  <div id="kids" class="kids" hidden></div>
-
-  <!-- ============ opening walkthrough ============ -->
-  <div id="intro" hidden>
-    <canvas id="iSnap"></canvas>
-    <svg id="iRoute" aria-hidden="true"><path id="iRouteGlow"/><path id="iRoutePath"/></svg>
-    <div id="iTags" aria-hidden="true"></div>
-    <div id="iRed"></div>
-    <div class="ibar top">
-      <div class="ibrand"><span class="patchslot tiny"></span><span class="k">Mission walkthrough</span><span class="istep" id="iStep"></span></div>
-      <div class="ictl">
-        <button type="button" class="ibtn" id="iPrev" aria-label="Previous chapter">‹</button>
-        <button type="button" class="ibtn" id="iPause" aria-label="Pause">❚❚</button>
-        <button type="button" class="ibtn" id="iNext" aria-label="Next chapter">›</button>
-        <button type="button" class="iskip" id="iSkip">Skip intro <kbd>Esc</kbd></button>
-      </div>
-    </div>
-    <section class="icap" id="iCap" aria-live="polite">
-      <div class="k" id="iKicker"></div>
-      <h2 id="iTitle"></h2>
-      <p id="iLede"></p>
-      <ol id="iObj"></ol>
-    </section>
-    <aside class="ipanel" id="iPanel" hidden></aside>
-    <div class="ipaused">Paused · <kbd>Space</kbd> to resume</div>
-    <div class="ibar bot"><ol id="iTrack"></ol><div class="ihint"><kbd>←</kbd><kbd>→</kbd> chapter · <kbd>Space</kbd> pause</div></div>
-    <div id="iCard"><div class="k" id="iCardK"></div><div class="v" id="iCardV"></div><div class="s" id="iCardS"></div></div>
-    <div id="iWhite"></div>
-    <div id="iFade"></div>
   </div>
 
   <div class="overlay solid" id="loading">
-    <div class="loadwrap"><div class="patchslot"></div><div class="k" id="loadTxt">Generating terrain</div><div class="track"><i id="loadBar"></i></div></div>
+    <div class="loadwrap"><div class="patchslot"></div><div class="k" id="loadTxt">Shaping the Moon</div><div class="track"><i id="loadBar"></i></div></div>
   </div>
 
   <div id="touch" hidden><div id="stick"><i></i></div><button id="tE" type="button">E</button></div>
@@ -385,11 +199,8 @@
 <script src="js/rover.js"></script>
 <script src="js/npc.js"></script>
 <script src="js/ui.js"></script>
-<script src="js/panels.js"></script>
-<script src="js/story.js"></script>
-<script src="js/intro.js"></script>
 <script src="js/nasa.js"></script>
-<script src="js/kids.js"></script>
+<script src="js/mission.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

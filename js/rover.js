@@ -26,7 +26,7 @@ R.build = function(){
   m.body.add(R.ev2.group);
   R.ev2.group.position.set(-0.42, 0.14, -0.05);
   SS.interact.add({ id: 'ltv-board', persist: true, x: 0, z: 0, r: 3.2, cone: -1,
-    label: () => 'Board the LTV', enabled: () => !R.boarded && R.enabled && SS.player.scene === 'ext' && SS.player.mode === 'walk',
+    label: () => 'Get in the rover', enabled: () => !R.boarded && R.enabled && SS.player.scene === 'ext' && SS.player.mode === 'walk',
     use: () => R.board() });
 };
 R.place = function(x, z, h){ R.x = x; R.z = z; R.h = h || 0; R.v = 0; R.settle(1); R.syncIx(); };
